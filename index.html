@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LocalLoop — Your neighborhood, on demand</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,400&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink:      #17140E;
+  --paper:    #F8F4EE;
+  --warm:     #EDE7DA;
+  --pine:     #1C3829;
+  --pine-mid: #254D38;
+  --pine-lit: #E5EFE8;
+  --clay:     #C24F28;
+  --clay-lit: #FAECE6;
+  --mist:     #8C8578;
+  --white:    #FFFFFF;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Outfit', sans-serif; background: var(--paper); color: var(--ink); overflow-x: hidden; }
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 2.5rem;
+  background: rgba(248,244,238,0.94); backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.logo { font-family: 'Lora', serif; font-size: 1.35rem; font-weight: 600; color: var(--ink); text-decoration: none; display: flex; align-items: center; gap: 0.4rem; }
+.logo-dot { width: 7px; height: 7px; background: var(--clay); border-radius: 50%; }
+.nav-cta { background: var(--pine); color: white; padding: 0.55rem 1.2rem; border-radius: 100px; font-size: 0.875rem; font-weight: 600; text-decoration: none; transition: background 0.2s; }
+.nav-cta:hover { background: var(--pine-mid); }
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 9rem 1.5rem 5rem; text-align: center;
+}
+.hero-kicker { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--clay); margin-bottom: 1.5rem; animation: up 0.4s ease both; }
+.hero h1 { font-family: 'Lora', serif; font-size: clamp(2.4rem, 5vw, 4.5rem); font-weight: 600; line-height: 1.1; margin-bottom: 1.25rem; max-width: 740px; animation: up 0.4s 0.07s ease both; }
+.hero h1 em { font-style: italic; font-weight: 400; color: var(--clay); }
+.hero-sub { font-size: 1.05rem; color: var(--mist); line-height: 1.8; max-width: 520px; margin-bottom: 3rem; animation: up 0.4s 0.13s ease both; }
+
+/* INTERACTIVE JOB POST WIDGET */
+.post-widget {
+  background: white; border-radius: 24px;
+  padding: 2rem; width: 100%; max-width: 580px;
+  box-shadow: 0 20px 60px rgba(24,21,14,0.1), 0 2px 8px rgba(24,21,14,0.05);
+  border: 1.5px solid rgba(0,0,0,0.06);
+  animation: up 0.4s 0.18s ease both;
+  text-align: left;
+}
+.pw-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--mist); margin-bottom: 1rem; }
+.pw-field {
+  width: 100%; padding: 0.85rem 1rem;
+  border: 1.5px solid rgba(0,0,0,0.1); border-radius: 12px;
+  font-family: 'Outfit', sans-serif; font-size: 0.95rem; color: var(--ink);
+  outline: none; transition: border-color 0.2s; margin-bottom: 0.75rem;
+  background: var(--paper);
+}
+.pw-field:focus { border-color: var(--pine); }
+.pw-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
+.pw-submit {
+  width: 100%; padding: 0.9rem;
+  background: var(--pine); color: white;
+  border: none; border-radius: 12px;
+  font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 600;
+  cursor: pointer; transition: background 0.2s, transform 0.15s;
+}
+.pw-submit:hover:not(:disabled) { background: var(--pine-mid); transform: translateY(-1px); }
+
+/* RESULTS STATE */
+.pw-results { display: none; margin-top: 1.25rem; }
+.pw-results-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pine); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+.live-badge-sm { background: var(--clay); color: white; font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 100px; display: inline-flex; align-items: center; gap: 0.3rem; }
+.live-badge-sm::before { content: ''; width: 5px; height: 5px; background: white; border-radius: 50%; display: inline-block; animation: blink 1.2s infinite; }
+
+.applicant-card {
+  border: 1.5px solid rgba(0,0,0,0.07); border-radius: 14px;
+  padding: 0.875rem 1rem; margin-bottom: 0.6rem;
+  display: flex; align-items: center; gap: 0.875rem;
+  cursor: pointer; transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  background: white;
+}
+.applicant-card:hover { border-color: var(--pine); transform: translateX(2px); box-shadow: 0 4px 14px rgba(28,56,41,0.1); }
+.applicant-card.selected { border-color: var(--pine); background: var(--pine-lit); }
+.ac-avatar { width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+.ac-main { flex: 1; min-width: 0; }
+.ac-name { font-size: 0.88rem; font-weight: 600; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem; flex-wrap: wrap; }
+.v-chip { background: var(--pine-lit); color: var(--pine); font-size: 0.63rem; font-weight: 700; padding: 0.12rem 0.45rem; border-radius: 100px; }
+.n-chip { background: var(--clay-lit); color: var(--clay); font-size: 0.63rem; font-weight: 700; padding: 0.12rem 0.45rem; border-radius: 100px; }
+.ac-meta { font-size: 0.76rem; color: var(--mist); }
+.ac-right { text-align: right; flex-shrink: 0; }
+.ac-dist { font-size: 0.8rem; font-weight: 600; color: var(--pine); }
+.ac-time { font-size: 0.73rem; color: var(--mist); }
+
+/* TRUST STRIP */
+.trust-strip { background: var(--pine); padding: 1rem 2rem; display: flex; align-items: center; justify-content: center; gap: 2.5rem; flex-wrap: wrap; }
+.ti { display: flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; color: rgba(255,255,255,0.5); }
+.ti strong { color: white; font-weight: 600; }
+
+/* HOW IT WORKS */
+.hiw { padding: 6rem 1.5rem; max-width: 960px; margin: 0 auto; }
+.sec-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--clay); margin-bottom: 0.875rem; }
+.sec-title { font-family: 'Lora', serif; font-size: clamp(1.9rem, 3.5vw, 2.75rem); font-weight: 600; line-height: 1.15; margin-bottom: 0.75rem; }
+.sec-sub { font-size: 0.975rem; color: var(--mist); line-height: 1.75; max-width: 480px; margin-bottom: 3rem; }
+
+.tabs { display: flex; gap: 0.5rem; margin-bottom: 2.5rem; }
+.tab { padding: 0.55rem 1.2rem; border-radius: 100px; border: 1.5px solid rgba(0,0,0,0.12); background: transparent; font-family: 'Outfit', sans-serif; font-size: 0.875rem; font-weight: 500; color: var(--mist); cursor: pointer; transition: all 0.2s; }
+.tab.active { background: var(--ink); color: white; border-color: var(--ink); }
+
+.steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+.step-card { background: white; border: 1.5px solid rgba(0,0,0,0.06); border-radius: 18px; padding: 1.75rem; }
+.step-n { font-family: 'Lora', serif; font-size: 2.75rem; font-weight: 600; color: rgba(0,0,0,0.07); line-height: 1; margin-bottom: 0.875rem; }
+.step-icon { font-size: 1.6rem; margin-bottom: 0.875rem; display: block; }
+.step-card h3 { font-family: 'Lora', serif; font-size: 1.1rem; font-weight: 600; margin-bottom: 0.4rem; }
+.step-card p { font-size: 0.845rem; color: var(--mist); line-height: 1.7; }
+
+/* WHAT MAKES IT DIFFERENT */
+.diff-section { background: var(--warm); padding: 6rem 1.5rem; }
+.diff-inner { max-width: 960px; margin: 0 auto; }
+.diff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+.diff-card { background: white; border-radius: 20px; padding: 2rem; border: 1.5px solid rgba(0,0,0,0.06); transition: transform 0.2s; }
+.diff-card:hover { transform: translateY(-3px); }
+.diff-card.highlight { background: var(--pine); border-color: var(--pine); }
+.diff-icon-wrap { width: 44px; height: 44px; border-radius: 12px; background: var(--pine-lit); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; margin-bottom: 1.25rem; }
+.diff-card.highlight .diff-icon-wrap { background: rgba(255,255,255,0.15); }
+.diff-card h3 { font-family: 'Lora', serif; font-size: 1.15rem; font-weight: 600; margin-bottom: 0.5rem; }
+.diff-card.highlight h3 { color: white; }
+.diff-card p { font-size: 0.865rem; line-height: 1.7; color: var(--mist); }
+.diff-card.highlight p { color: rgba(255,255,255,0.65); }
+
+/* LIVE FEED */
+.feed-section { padding: 6rem 1.5rem; max-width: 960px; margin: 0 auto; }
+.feed-wrap { background: white; border-radius: 20px; border: 1.5px solid rgba(0,0,0,0.06); overflow: hidden; }
+.feed-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: space-between; }
+.feed-header h4 { font-size: 0.88rem; font-weight: 600; }
+.feed-live { background: var(--clay-lit); color: var(--clay); font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.7rem; border-radius: 100px; display: flex; align-items: center; gap: 0.35rem; }
+.feed-live::before { content: ''; width: 6px; height: 6px; background: var(--clay); border-radius: 50%; animation: blink 1.2s infinite; }
+.feed-item { padding: 1rem 1.5rem; border-bottom: 1px solid rgba(0,0,0,0.04); display: flex; align-items: center; gap: 1rem; transition: background 0.15s; cursor: default; }
+.feed-item:last-child { border-bottom: none; }
+.feed-item:hover { background: var(--paper); }
+.feed-emoji { font-size: 1.35rem; width: 42px; height: 42px; background: var(--warm); border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.feed-info { flex: 1; }
+.feed-info h5 { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.2rem; }
+.feed-info p { font-size: 0.78rem; color: var(--mist); }
+.feed-tag { font-size: 0.73rem; font-weight: 600; padding: 0.25rem 0.65rem; border-radius: 100px; white-space: nowrap; flex-shrink: 0; }
+.tag-open { background: var(--pine-lit); color: var(--pine); }
+.tag-filled { background: var(--clay-lit); color: var(--clay); }
+
+/* BOTH SIDES */
+.sides { padding: 6rem 1.5rem; background: var(--ink); }
+.sides-inner { max-width: 960px; margin: 0 auto; }
+.sides-title { font-family: 'Lora', serif; font-size: clamp(1.9rem, 3.5vw, 2.75rem); font-weight: 600; color: white; line-height: 1.15; margin-bottom: 0.75rem; }
+.sides-sub { font-size: 0.975rem; color: rgba(255,255,255,0.45); margin-bottom: 3rem; }
+.sides-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+.side-card { border-radius: 20px; padding: 2rem; }
+.side-card.customer { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+.side-card.business { background: var(--pine); border: 1px solid rgba(255,255,255,0.08); }
+.side-who { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 1.5rem; }
+.side-point { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1.1rem; }
+.side-point:last-child { margin-bottom: 0; }
+.sp-icon { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+.customer .sp-icon { background: rgba(255,255,255,0.08); }
+.business .sp-icon { background: rgba(255,255,255,0.15); }
+.sp-text h5 { font-size: 0.875rem; font-weight: 600; color: white; margin-bottom: 0.2rem; }
+.sp-text p { font-size: 0.8rem; color: rgba(255,255,255,0.5); line-height: 1.6; }
+
+/* WAITLIST */
+.waitlist { padding: 6rem 1.5rem; background: var(--clay); text-align: center; position: relative; overflow: hidden; }
+.waitlist::before { content: ''; position: absolute; top: -80px; left: 50%; transform: translateX(-50%); width: 600px; height: 300px; background: radial-gradient(ellipse, rgba(255,255,255,0.08) 0%, transparent 70%); }
+.wl-inner { max-width: 520px; margin: 0 auto; position: relative; }
+.wl-kicker { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 1rem; }
+.wl-title { font-family: 'Lora', serif; font-size: clamp(2rem, 4vw, 3.25rem); font-weight: 600; color: white; line-height: 1.15; margin-bottom: 1rem; }
+.wl-title em { font-style: italic; font-weight: 400; }
+.wl-sub { font-size: 0.975rem; color: rgba(255,255,255,0.6); margin-bottom: 2.5rem; line-height: 1.75; }
+.wl-box { background: white; border-radius: 18px; padding: 0.45rem 0.45rem 0.45rem 1.35rem; display: flex; align-items: center; gap: 0.65rem; box-shadow: 0 16px 48px rgba(0,0,0,0.18); }
+.wl-input { flex: 1; border: none; outline: none; font-family: 'Outfit', sans-serif; font-size: 0.95rem; color: var(--ink); background: transparent; min-width: 0; }
+.wl-input::placeholder { color: var(--mist); }
+.wl-btn { background: var(--clay); color: white; padding: 0.75rem 1.35rem; border-radius: 12px; font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; white-space: nowrap; transition: background 0.2s, transform 0.15s; }
+.wl-btn:hover { background: #A8401A; transform: scale(1.02); }
+.wl-success { display: none; color: white; font-size: 1rem; margin-top: 1.25rem; font-weight: 500; animation: up 0.4s ease both; }
+
+/* FOOTER */
+footer { background: var(--ink); padding: 1.75rem 2.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+.footer-logo { font-family: 'Lora', serif; font-size: 1.1rem; color: rgba(255,255,255,0.35); }
+footer p { font-size: 0.78rem; color: rgba(255,255,255,0.2); }
+
+/* ANIMATION */
+@keyframes up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal.on { opacity: 1; transform: none; }
+.d1 { transition-delay: 0.1s; } .d2 { transition-delay: 0.2s; }
+
+/* RESPONSIVE */
+@media (max-width: 700px) {
+  .steps-grid, .diff-grid, .sides-grid { grid-template-columns: 1fr; }
+  nav { padding: 1rem 1.25rem; }
+  .pw-row { grid-template-columns: 1fr; }
+  .trust-strip { gap: 1.25rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo"><div class="logo-dot"></div> LocalLoop</a>
+  <a href="#join" class="nav-cta">Join waitlist</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-kicker">Neighborhood hiring, reimagined</div>
+  <h1>Post a job.<br><em>Your verified neighbors apply.</em></h1>
+  <p class="hero-sub">The right person already lives near you. LocalLoop surfaces them — verified, reviewed by your neighbors, and available today.</p>
+
+  <div class="post-widget">
+    <div class="pw-label">Try it — post a job right now</div>
+    <input class="pw-field" id="job-desc" type="text" placeholder="What do you need? e.g. fix a leaky faucet" />
+    <div class="pw-row">
+      <input class="pw-field" id="job-zip" type="text" placeholder="Your zip code" style="margin-bottom:0;" />
+      <input class="pw-field" id="job-when" type="text" placeholder="When? e.g. this weekend" style="margin-bottom:0;" />
+    </div>
+    <button class="pw-submit" id="pw-btn" onclick="postJob()">Find verified locals →</button>
+
+    <div class="pw-results" id="pw-results">
+      <div class="pw-results-label">
+        <span class="live-badge-sm">Live</span>
+        Verified locals near you applied
+      </div>
+      <div class="applicant-card" onclick="selectApplicant(this)">
+        <div class="ac-avatar" style="background:#EDF5EE;">🔧</div>
+        <div class="ac-main">
+          <div class="ac-name">Carlos M. <span class="v-chip">✓ Verified</span><span class="n-chip">🏘 9 neighbors</span></div>
+          <div class="ac-meta">Home repair & handyman · Available today</div>
+        </div>
+        <div class="ac-right"><div class="ac-dist">0.9 mi</div><div class="ac-time">~12 min</div></div>
+      </div>
+      <div class="applicant-card" onclick="selectApplicant(this)">
+        <div class="ac-avatar" style="background:#FEF3EB;">🌿</div>
+        <div class="ac-main">
+          <div class="ac-name">Sarah K. <span class="v-chip">✓ Verified</span><span class="n-chip">🏘 4 neighbors</span></div>
+          <div class="ac-meta">Landscaping & outdoor work · Free this week</div>
+        </div>
+        <div class="ac-right"><div class="ac-dist">1.4 mi</div><div class="ac-time">Today 3pm</div></div>
+      </div>
+      <div class="applicant-card" onclick="selectApplicant(this)">
+        <div class="ac-avatar" style="background:#F0F4FF;">🧹</div>
+        <div class="ac-main">
+          <div class="ac-name">Maria T. <span class="v-chip">✓ Verified</span><span class="n-chip">🏘 6 neighbors</span></div>
+          <div class="ac-meta">Cleaning services · Deep clean specialist</div>
+        </div>
+        <div class="ac-right"><div class="ac-dist">2.1 mi</div><div class="ac-time">Tomorrow</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST STRIP -->
+<div class="trust-strip">
+  <div class="ti"><strong>ID verified</strong> providers</div>
+  <div class="ti"><strong>Background</strong> checked</div>
+  <div class="ti"><strong>Neighbor</strong> reviewed</div>
+  <div class="ti"><strong>Local business</strong> licensed</div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="hiw">
+  <div class="reveal">
+    <div class="sec-label">How it works</div>
+    <h2 class="sec-title">Simple for everyone.</h2>
+    <p class="sec-sub">Whether you need help or you offer it — LocalLoop works in three steps.</p>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(this,'c')">I need a service</button>
+      <button class="tab" onclick="switchTab(this,'b')">I offer a service</button>
+    </div>
+  </div>
+
+  <div class="steps-grid reveal d1" id="tab-c">
+    <div class="step-card">
+      <div class="step-n">01</div><span class="step-icon">📝</span>
+      <h3>Post your job</h3>
+      <p>Describe what you need, add your zip and timing. No account required. Takes 60 seconds.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-n">02</div><span class="step-icon">🏘️</span>
+      <h3>Verified neighbors apply</h3>
+      <p>Only ID-verified locals within your area see and apply to your job with their availability and quote.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-n">03</div><span class="step-icon">✅</span>
+      <h3>Pick with real trust</h3>
+      <p>See how many neighbors hired them, read street-level reviews, and choose with full confidence.</p>
+    </div>
+  </div>
+
+  <div class="steps-grid reveal d1" id="tab-b" style="display:none">
+    <div class="step-card">
+      <div class="step-n">01</div><span class="step-icon">🪪</span>
+      <h3>Get verified</h3>
+      <p>Quick ID and background check. Your verification badge is visible on every bid you make.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-n">02</div><span class="step-icon">📬</span>
+      <h3>Browse local jobs</h3>
+      <p>See real job posts from people in your neighborhood. Apply to ones that match your skills and schedule.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-n">03</div><span class="step-icon">⭐</span>
+      <h3>Build your local rep</h3>
+      <p>Every job earns a neighbor review. Your reputation grows block by block — no more cold knocking.</p>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT MAKES IT UNIQUE -->
+<section class="diff-section">
+  <div class="diff-inner">
+    <div class="reveal">
+      <div class="sec-label">What makes LocalLoop unique</div>
+      <h2 class="sec-title">Built around trust, not just search.</h2>
+      <p class="sec-sub">Every feature here only works because your provider is already nearby.</p>
+    </div>
+    <div class="diff-grid reveal d1">
+      <div class="diff-card highlight">
+        <div class="diff-icon-wrap">🏘️</div>
+        <h3>Neighbors hired them</h3>
+        <p style="color:rgba(255,255,255,0.65);">Every provider shows how many people on your street have hired them before — real local trust, not just star ratings from strangers you'll never meet.</p>
+      </div>
+      <div class="diff-card">
+        <div class="diff-icon-wrap">📬</div>
+        <h3>You post, they apply</h3>
+        <p>Describe what you need and let verified locals come to you with quotes. You're in control from the start — no searching, no cold calls.</p>
+      </div>
+      <div class="diff-card">
+        <div class="diff-icon-wrap">📍</div>
+        <h3>Proximity-only matching</h3>
+        <p>Your job is only visible to verified providers within miles of you. No one far away bidding on work they can't reach — same-day is actually possible.</p>
+      </div>
+      <div class="diff-card">
+        <div class="diff-icon-wrap">🛡️</div>
+        <h3>Full verification stack</h3>
+        <p>ID check, background check, and local business license — all visible before you hire. You know exactly who is showing up at your door.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE FEED -->
+<section class="feed-section">
+  <div class="reveal">
+    <div class="sec-label">Live in your area</div>
+    <h2 class="sec-title">Jobs being posted right now.</h2>
+    <p class="sec-sub">A real-time feed of open jobs and fulfilled work happening in your neighborhood.</p>
+  </div>
+  <div class="feed-wrap reveal d1">
+    <div class="feed-header">
+      <h4>Neighborhood activity</h4>
+      <div class="feed-live">Live feed</div>
+    </div>
+    <div class="feed-item">
+      <div class="feed-emoji">🔧</div>
+      <div class="feed-info"><h5>Leaky faucet repair needed</h5><p>Zip 94521 · Posted 4 min ago · 2 bids received</p></div>
+      <div class="feed-tag tag-open">Open</div>
+    </div>
+    <div class="feed-item">
+      <div class="feed-emoji">🌿</div>
+      <div class="feed-info"><h5>Lawn mowing — front & back yard</h5><p>Zip 94523 · Posted 11 min ago · Carlos M. hired</p></div>
+      <div class="feed-tag tag-filled">Filled</div>
+    </div>
+    <div class="feed-item">
+      <div class="feed-emoji">📚</div>
+      <div class="feed-info"><h5>Math tutoring for 8th grader</h5><p>Zip 94521 · Posted 18 min ago · 3 bids received</p></div>
+      <div class="feed-tag tag-open">Open</div>
+    </div>
+    <div class="feed-item">
+      <div class="feed-emoji">🧹</div>
+      <div class="feed-info"><h5>Deep clean before move-out</h5><p>Zip 94520 · Posted 32 min ago · Maria T. hired</p></div>
+      <div class="feed-tag tag-filled">Filled</div>
+    </div>
+    <div class="feed-item">
+      <div class="feed-emoji">🪟</div>
+      <div class="feed-info"><h5>Window installation — 3 windows</h5><p>Zip 94519 · Posted 45 min ago · 1 bid received</p></div>
+      <div class="feed-tag tag-open">Open</div>
+    </div>
+  </div>
+</section>
+
+<!-- BOTH SIDES -->
+<section class="sides">
+  <div class="sides-inner">
+    <div class="reveal">
+      <h2 class="sides-title">Built for both sides of the neighborhood.</h2>
+      <p class="sides-sub">Customers get trusted local help. Businesses get real customers — without knocking on a single door.</p>
+    </div>
+    <div class="sides-grid reveal d1">
+      <div class="side-card customer">
+        <div class="side-who">For homeowners & customers</div>
+        <div class="side-point"><div class="sp-icon">📝</div><div class="sp-text"><h5>Post any job, any size</h5><p>From fixing a faucet to a full renovation. Quick form, no account needed to start.</p></div></div>
+        <div class="side-point"><div class="sp-icon">🏘️</div><div class="sp-text"><h5>See who your neighbors trust</h5><p>Real hiring history from people on your street — not anonymous reviews from strangers.</p></div></div>
+        <div class="side-point"><div class="sp-icon">✅</div><div class="sp-text"><h5>Hire with full confidence</h5><p>Every provider is ID-verified and background checked before they can apply to your job.</p></div></div>
+      </div>
+      <div class="side-card business">
+        <div class="side-who">For local businesses & freelancers</div>
+        <div class="side-point"><div class="sp-icon">📬</div><div class="sp-text"><h5>Jobs come to you</h5><p>No more door-to-door. Browse real job posts from real neighbors and apply in seconds.</p></div></div>
+        <div class="side-point"><div class="sp-icon">🪪</div><div class="sp-text"><h5>Verification builds instant trust</h5><p>Your badge and license number are visible to every customer before they even talk to you.</p></div></div>
+        <div class="side-point"><div class="sp-icon">⭐</div><div class="sp-text"><h5>Build a neighborhood reputation</h5><p>Every job earns you a street-level review. Become the go-to person in your area.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WAITLIST -->
+<section class="waitlist" id="join">
+  <div class="wl-inner">
+    <div class="wl-kicker">Early access · Free to join</div>
+    <h2 class="wl-title">Ready to loop<br><em>your neighborhood in?</em></h2>
+    <p class="wl-sub">Join the waitlist and be first when LocalLoop launches in your zip code.</p>
+    <div class="wl-box" id="wl-form">
+      <input type="email" class="wl-input" id="wl-email" placeholder="your@email.com" />
+      <button class="wl-btn" onclick="joinList()">Join waitlist →</button>
+    </div>
+    <p class="wl-success" id="wl-success">🎉 You're on the list! We'll reach out when LocalLoop is live near you.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">LocalLoop</div>
+  <p>© 2025 LocalLoop · Your neighborhood, connected.</p>
+</footer>
+
+<script>
+function postJob() {
+  const desc = document.getElementById('job-desc').value.trim();
+  const zip  = document.getElementById('job-zip').value.trim();
+  if (!desc) { document.getElementById('job-desc').focus(); return; }
+  if (!zip)  { document.getElementById('job-zip').focus(); return; }
+  const results = document.getElementById('pw-results');
+  results.style.display = 'block';
+  results.style.animation = 'slideIn 0.4s ease both';
+  const btn = document.getElementById('pw-btn');
+  btn.textContent = '✓ Posted — locals are applying';
+  btn.style.background = 'var(--pine-mid)';
+  btn.disabled = true;
+}
+
+function selectApplicant(card) {
+  document.querySelectorAll('.applicant-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  setTimeout(() => document.getElementById('join').scrollIntoView({ behavior: 'smooth' }), 500);
+}
+
+function switchTab(btn, view) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-c').style.display = view === 'c' ? 'grid' : 'none';
+  document.getElementById('tab-b').style.display = view === 'b' ? 'grid' : 'none';
+}
+
+function joinList() {
+  const email = document.getElementById('wl-email').value.trim();
+  if (!email || !email.includes('@')) {
+    document.getElementById('wl-email').style.outline = '2px solid rgba(255,255,255,0.5)';
+    document.getElementById('wl-email').focus();
+    return;
+  }
+  document.getElementById('wl-form').style.display = 'none';
+  document.getElementById('wl-success').style.display = 'block';
+}
+
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('on'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
